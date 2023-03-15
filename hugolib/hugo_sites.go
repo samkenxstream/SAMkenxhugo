@@ -723,7 +723,7 @@ type BuildCfg struct {
 // shouldRender is used in the Fast Render Mode to determine if we need to re-render
 // a Page: If it is recently visited (the home pages will always be in this set) or changed.
 // Note that a page does not have to have a content page / file.
-// For regular builds, this will allways return true.
+// For regular builds, this will always return true.
 // TODO(bep) rename/work this.
 func (cfg *BuildCfg) shouldRender(p *pageState) bool {
 	if p == nil {
@@ -767,10 +767,11 @@ func (h *HugoSites) renderCrossSitesSitemap() error {
 	}
 
 	s := h.Sites[0]
+	// We don't have any page context to pass in here.
+	ctx := context.Background()
 
 	templ := s.lookupLayouts("sitemapindex.xml", "_default/sitemapindex.xml", "_internal/_default/sitemapindex.xml")
-
-	return s.renderAndWriteXML(&s.PathSpec.ProcessingStats.Sitemaps, "sitemapindex",
+	return s.renderAndWriteXML(ctx, &s.PathSpec.ProcessingStats.Sitemaps, "sitemapindex",
 		s.siteCfg.sitemap.Filename, h.toSiteInfos(), templ)
 }
 

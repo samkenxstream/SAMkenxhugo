@@ -62,9 +62,8 @@ var (
 var (
 	pageTypesProvider = resource.NewResourceTypesProvider(media.OctetType, pageResourceType)
 	nopPageOutput     = &pageOutput{
-		pagePerOutputProviders:  nopPagePerOutput,
-		ContentProvider:         page.NopPage,
-		TableOfContentsProvider: page.NopPage,
+		pagePerOutputProviders: nopPagePerOutput,
+		ContentProvider:        page.NopPage,
 	}
 )
 
@@ -149,14 +148,6 @@ func (p *pageState) Eq(other any) bool {
 
 func (p *pageState) GetIdentity() identity.Identity {
 	return identity.NewPathIdentity(files.ComponentFolderContent, filepath.FromSlash(p.Pathc()))
-}
-
-func (p *pageState) Fragments(ctx context.Context) *tableofcontents.Fragments {
-	p.s.initInit(ctx, p.cp.initToC, p)
-	if p.pageOutput.cp.tableOfContents == nil {
-		return tableofcontents.Empty
-	}
-	return p.pageOutput.cp.tableOfContents
 }
 
 func (p *pageState) HeadingsFiltered(context.Context) tableofcontents.Headings {
@@ -626,7 +617,13 @@ func (p *pageState) wrapError(err error) error {
 		}
 	}
 
-	return herrors.NewFileErrorFromFile(err, filename, p.s.SourceSpec.Fs.Source, herrors.NopLineMatcher)
+	lineMatcher := herrors.NopLineMatcher
+
+	if textSegmentErr, ok := err.(*herrors.TextSegmentError); ok {
+		lineMatcher = herrors.ContainsMatcher(textSegmentErr.Segment)
+	}
+
+	return herrors.NewFileErrorFromFile(err, filename, p.s.SourceSpec.Fs.Source, lineMatcher)
 
 }
 
@@ -951,8 +948,8 @@ func (p *pageState) shiftToOutputFormat(isRenderingSite bool, idx int) error {
 			})
 			p.pageOutput.contentRenderer = lcp
 			p.pageOutput.ContentProvider = lcp
-			p.pageOutput.TableOfContentsProvider = lcp
 			p.pageOutput.PageRenderProvider = lcp
+			p.pageOutput.TableOfContentsProvider = lcp
 		}
 	}
 
